@@ -15,11 +15,15 @@
 (declare evaluar-secuencia-en-cond)
 
 
-(defn actuaizar-amb
+(defn actualizar-amb
   [amb-global clave valor]
-
-
-  )
+  (let [pos (.indexOf amb-global clave)]
+    (cond
+      (= pos -1) (do (conj (conj amb-global valor) clave))
+      true (apply list(assoc (vec amb-global) (+ 1 pos) valor))
+      )
+    )
+)
 
 (defn controlar-aridad
   [lis num]
