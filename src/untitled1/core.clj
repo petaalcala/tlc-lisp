@@ -15,6 +15,12 @@
 (declare evaluar-secuencia-en-cond)
 
 
+(defn actuaizar-amb
+  [amb-global clave valor]
+
+
+  )
+
 (defn controlar-aridad
   [lis num]
   (let [amount (count lis)]
@@ -29,26 +35,47 @@
 
 (defn imprimir
   ([elem]
-   (if (seq? elem)
-     (if (= (first elem) '*error*)
-       (imprimir elem elem)
-       (println elem)
-       )
-     (println elem)
+
+   (cond
+     (seq? elem) ((if (= (first elem) '*error*)
+                         (imprimir elem elem)
+
+                         (do (println elem) elem)
+                 ))
+     true (do (println elem) elem)
      )
-   (println elem)
-   )
+  )
   ([lis orig]
-   (if (= lis nil)
-     (println)
-     (imprimir (rest lis) orig)
+   (if (igual? (first lis) nil)
+     (do (println "") orig)
+     ((println (first lis) "") (imprimir (rest lis) orig))
      )
    )
   )
 
+
+(defn convert_to_compare
+  [elem]
+  (cond
+    (= elem nil) "nil"
+    (= elem "") "nil"
+    (= elem '()) "nil"
+    (= (clojure.string/lower-case (str elem)) "nil") "nil"
+    true elem
+    )
+  )
+
 (defn igual?
   [a b]
-  (= a b))
+  ;(println "a:", a)
+  ;(println "b:", b)
+  (cond
+    ;(and (= a nil) (= b '()) ) true
+    (and (= (convert_to_compare a) (convert_to_compare b))) true
+    ;(= (clojure.string/lower-case (str a)) (clojure.string/lower-case (str b))) true
+    true (= a b)
+  )
+)
 
 (defn buscar
   [elem lis]
@@ -61,12 +88,13 @@
 
 (defn revisar-f
   [lis]
-  (if (not (seq? lis)) nil)
-
-  (if (= '*error* (first lis))
-    lis
+  (if (not (seq? lis))
     nil
-    )
+    (if (= '*error* (first lis))
+     lis
+     nil
+     )
+   )
   )
 
 (defn revisar-lae
@@ -100,37 +128,15 @@
                null null or or prin3 prin3 quote quote read read rest rest reverse reverse setq setq sub sub
                t t terpri terpri + add - sub)))
   ([amb]
-   (println "AMB: ")
+   ;(println "AMB: ")
    ;(println amb)
    (print ">>> ") (flush)
-   (print amb)
+   ;(print amb)
    (try (let [res (evaluar (read) amb nil)]
           (if (nil? (fnext res))
             true
             (do (imprimir (first res)) (repl (fnext res)))))
         (catch Exception e (println) (print "*error* ") (println (get (Throwable->map e) :cause)) (repl amb)))))
-
-; Carga el contenido de un archivo.
-; Aridad 3: Recibe los ambientes global y local y el nombre de un archivo
-; (literal como string o atomo, con o sin extension .lsp, o el simbolo ligado al nombre de un archivo en el ambiente), abre el archivo
-; y lee un elemento de la entrada (si falla, imprime nil), lo evalua y llama recursivamente con el (nuevo?) amb., nil, la entrada y un arg. mas: el resultado de la evaluacion.
-; Aridad 4: lee un elem. del archivo (si falla, imprime el ultimo resultado), lo evalua y llama recursivamente con el (nuevo?) amb., nil, la entrada y el resultado de la eval.
-(defn cargar-arch
-  ([amb-global amb-local arch]
-   (let [nomb (first (evaluar arch amb-global amb-local))]
-     (if (and (seq? nomb) (igual? (first nomb) '*error*))
-       (do (imprimir nomb) amb-global)
-       (let [nm (clojure.string/lower-case (str nomb))
-             nom (if (and (> (count nm) 4) (clojure.string/ends-with? nm ".lsp")) nm (str nm ".lsp"))
-             ret (try (with-open [in (java.io.PushbackReader. (clojure.java.io/reader nom))]
-                        (binding [*read-eval* false] (try (let [res (evaluar (read in) amb-global nil)]
-                                                            (cargar-arch (fnext res) nil in res))
-                                                          (catch Exception e (imprimir nil) amb-global))))
-                      (catch java.io.FileNotFoundException e (imprimir (list '*error* 'file-open-error 'file-not-found nom '1 'READ)) amb-global))]
-         ret))))
-  ([amb-global amb-local in res]
-   (try (let [res (evaluar (read in) amb-global nil)] (cargar-arch (fnext res) nil in res))
-        (catch Exception e (imprimir (first res)) amb-global))))
 
 ; Evalua una expresion usando los ambientes global y local. Siempre retorna una lista con un resultado y un ambiente.
 ; Si la evaluacion falla, el resultado es una lista con '*error* como primer elemento, por ejemplo: (list '*error* 'too-many-args) y el ambiente es el ambiente global.
@@ -206,10 +212,23 @@
                                            (try (reduce + lae)
                                                 (catch Exception e (list '*error* 'number-expected))))
 
-                         ;(igual? f 'append) (let [params_amount (count lae)]
-                         ;                     (cond (igual? params_amount 2) (print "hola"))
-                         ;
-                         ;                     )
+                         (igual? f 'append) (let [params_amount (count lae)]
+                                              (cond
+                                                (< params_amount 2) (list '*error* 'too-few-args))
+                                                (> params_amount 2) (list '*error* 'too-many-args)
+                                                ((not (seq? (first lae))) (list '*error* 'list 'expected (first lae)) )
+                                                ((not (seq? (second lae))) (list '*error* 'list 'expected (first lae)) )
+                                                true
+                                                      (flatten (conj (first lae) (second lae)))
+                                              )
+
+                         (igual? f 'reverse) (let [ari (controlar-aridad lae 1)]
+                                              (cond (seq? ari) ari
+                                                    (igual? (first lae) nil ) nil
+                                                    (not (seq? (first lae))) (list '*error* 'list 'expected (first lae))
+                                                    true (let [res (reverse (first lae))] (if (igual? res nil) nil res))
+                                                    )
+                                              )
 
 
 
@@ -229,3 +248,26 @@
 ; Falta implementar las 9 funciones auxiliares (actualizar-amb, controlar-aridad, imprimir, buscar, etc.)
 
 ; Falta hacer que la carga del interprete en Clojure (tlc-lisp.clj) retorne true
+
+
+; Carga el contenido de un archivo.
+; Aridad 3: Recibe los ambientes global y local y el nombre de un archivo
+; (literal como string o atomo, con o sin extension .lsp, o el simbolo ligado al nombre de un archivo en el ambiente), abre el archivo
+; y lee un elemento de la entrada (si falla, imprime nil), lo evalua y llama recursivamente con el (nuevo?) amb., nil, la entrada y un arg. mas: el resultado de la evaluacion.
+; Aridad 4: lee un elem. del archivo (si falla, imprime el ultimo resultado), lo evalua y llama recursivamente con el (nuevo?) amb., nil, la entrada y el resultado de la eval.
+(defn cargar-arch
+  ([amb-global amb-local arch]
+   (let [nomb (first (evaluar arch amb-global amb-local))]
+     (if (and (seq? nomb) (igual? (first nomb) '*error*))
+       (do (imprimir nomb) amb-global)
+       (let [nm (clojure.string/lower-case (str nomb))
+             nom (if (and (> (count nm) 4) (clojure.string/ends-with? nm ".lsp")) nm (str nm ".lsp"))
+             ret (try (with-open [in (java.io.PushbackReader. (clojure.java.io/reader nom))]
+                        (binding [*read-eval* false] (try (let [res (evaluar (read in) amb-global nil)]
+                                                            (cargar-arch (fnext res) nil in res))
+                                                          (catch Exception e (imprimir nil) amb-global))))
+                      (catch java.io.FileNotFoundException e (imprimir (list '*error* 'file-open-error 'file-not-found nom '1 'READ)) amb-global))]
+         ret))))
+  ([amb-global amb-local in res]
+   (try (let [res (evaluar (read in) amb-global nil)] (cargar-arch (fnext res) nil in res))
+        (catch Exception e (imprimir (first res)) amb-global))))
