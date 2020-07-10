@@ -13,6 +13,24 @@
 (declare evaluar-cond)
 (declare evaluar-secuencia-en-cond)
 
+(defn imprimir
+  ([elem]
+    (if (seq? elem)
+      (if (= (first elem) "*error*")
+        (imprimir elem elem)
+        (println elem)
+        )
+      (println elem)
+      )
+    (println elem)
+   )
+  ([lis orig]
+   (if (= lis nil)
+     (println "")
+     (imprimir (rest lis) orig)
+     )
+  )
+)
 
 (defn igual?
   [a b]
@@ -20,14 +38,20 @@
 
 (defn buscar
   [elem list]
-  (let pos (.indexOf list elem))
-  (if (= pos -1)
-    (["*error* ", "unbound-symbol", elem])
-    (+ pos 1)
+  (let [pos (.indexOf list elem)]
+    (if (= pos -1)
+      (["*error* ", "unbound-symbol", elem])
+      (+ pos 1)
+      )
+  ))
+
+(defn revisar-f
+  [list]
+  (if (= "*error*" (first list))
+    list
+    nil
     )
   )
-
-(defn)
 
 ; REPL (read–eval–print loop).
 ; Aridad 0: Muestra mensaje de bienvenida y se llama recursivamente con el ambiente inicial.
@@ -47,6 +71,7 @@
                t t terpri terpri + add - sub)))
   ([amb]
    (print ">>> ") (flush)
+   (print "flush: ")
    (try (let [res (evaluar (read) amb nil)]
           (if (nil? (fnext res))
             true
