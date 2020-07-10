@@ -23,32 +23,31 @@
 
 (defn controlar-aridad
   [lis num]
-  (let [amount (count lis)]
-    (if (= amount num)
-      num
-      (if (> amount num)
-        (list '*error* 'too-many-args)
-        (list '*error* 'too-few-args)
-        ))
+   (let [amount (count lis)]
+    (cond
+      (< amount num) (list '*error* 'too-few-args)
+      (> amount num) (list '*error* 'too-many-args)
+      true num
     )
   )
+)
+
 
 (defn imprimir
   ([elem]
-
    (cond
-     (seq? elem) ((if (= (first elem) '*error*)
-                         (imprimir elem elem)
-
-                         (do (println elem) elem)
-                 ))
+     (seq? elem)
+      (cond
+        (igual? (first elem) '*error*) (imprimir elem elem)
+        true (do (println elem) elem)
+      )
      true (do (println elem) elem)
-     )
+   )
   )
   ([lis orig]
    (if (igual? (first lis) nil)
      (do (println "") orig)
-     ((println (first lis) "") (imprimir (rest lis) orig))
+     (do (print (first lis) "") (imprimir (next lis) orig))
      )
    )
   )
@@ -128,14 +127,14 @@
                null null or or prin3 prin3 quote quote read read rest rest reverse reverse setq setq sub sub
                t t terpri terpri + add - sub)))
   ([amb]
-   ;(println "AMB: ")
-   ;(println amb)
+   (println "AMB: ")
+   (println amb)
    (print ">>> ") (flush)
    ;(print amb)
    (try (let [res (evaluar (read) amb nil)]
           (if (nil? (fnext res))
             true
-            (do (imprimir (first res)) (repl (fnext res)))))
+            (do (println "RES: " res) (imprimir (first res)) (println "RES: " res) (repl (fnext res)))))
         (catch Exception e (println) (print "*error* ") (println (get (Throwable->map e) :cause)) (repl amb)))))
 
 ; Evalua una expresion usando los ambientes global y local. Siempre retorna una lista con un resultado y un ambiente.
@@ -151,11 +150,11 @@
   (print "EXPRE: ")
   (println expre)
 
-  (print "global: ")
-  (println amb-global)
-
-  (print "local: ")
-  (println amb-local)
+  ;(print "global: ")
+  ;(println amb-global)
+  ;
+  ;(print "local: ")
+  ;(println amb-local)
 
   (if (not (seq? expre))
     (if (or (number? expre) (string? expre)) (list expre amb-global) (list (buscar expre (concat amb-local amb-global)) amb-global))
@@ -193,8 +192,14 @@
 ; el amb. global actualizado con la eval. del 1er. cuerpo (usando el amb. global intacto y el local actualizado con los params. ligados a los args.) y el amb. local intacto.
 (defn aplicar
   ([f lae amb-global amb-local]
+   (println "F:" f)
    (aplicar (revisar-f f) (revisar-lae lae) f lae amb-global amb-local))
   ([resu1 resu2 f lae amb-global amb-local]
+   (println "Resu1 " resu1)
+   (println "Resu2 " resu2)
+   (println "F " f)
+   (println "Lae " lae)
+   (if (igual? f 'append) (println " ES APPEND!!!!"))
    (cond resu1 (list resu1 amb-global)
          resu2 (list resu2 amb-global)
          true  (if (not (seq? f))
@@ -212,15 +217,13 @@
                                            (try (reduce + lae)
                                                 (catch Exception e (list '*error* 'number-expected))))
 
-                         (igual? f 'append) (let [params_amount (count lae)]
+                         (igual? f 'append) (let [ari (controlar-aridad lae 2)]
                                               (cond
-                                                (< params_amount 2) (list '*error* 'too-few-args))
-                                                (> params_amount 2) (list '*error* 'too-many-args)
-                                                ((not (seq? (first lae))) (list '*error* 'list 'expected (first lae)) )
-                                                ((not (seq? (second lae))) (list '*error* 'list 'expected (first lae)) )
-                                                true
-                                                      (flatten (conj (first lae) (second lae)))
-                                              )
+                                                (seq? ari) ari
+                                                (not (seq? (first lae))) (list '*error* 'list 'expected (first lae))
+                                                (not (seq? (second lae))) (list '*error* 'list 'expected (second lae))
+                                                true (flatten (conj (first lae) (second lae)))
+                                              ))
 
                          (igual? f 'reverse) (let [ari (controlar-aridad lae 1)]
                                               (cond (seq? ari) ari
