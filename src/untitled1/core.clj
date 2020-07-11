@@ -84,10 +84,35 @@
   [elem lis]
   (let [pos (.indexOf lis elem)]
     (if (= pos -1)
-      (['*error*, 'unbound-symbol, elem])
+      (list '*error* 'unbound-symbol elem)
       (nth lis (+ pos 1))
       )
     ))
+
+
+(defn evaluar-secuencia-en-cond
+  [lis amb-global amb-local]
+  (last (map evaluar lis amb-global amb-local))
+  )
+
+(defn evaluar-listado
+  [lis amb-global amb-local]
+
+  (let [res (evaluar (ffirst lis) amb-global amb-local)]
+    (cond
+      (nil? res) (evaluar-listado (next list) amb-global amb-local)
+      true (list (evaluar-secuencia-en-cond (nfirst lis) amb-global amb-local))
+      )
+    )
+  )
+
+(defn evaluar-cond
+  [lis amb-global amb-local]
+
+  (cond
+    (nil? lis) (list nil amb-global)
+    true (evaluar-listado lis amb-global amb-local)
+  )
 
 (defn revisar-f
   [lis]
