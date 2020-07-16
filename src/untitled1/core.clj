@@ -64,6 +64,7 @@
     (= elem "") "nil"
     (= elem '()) "nil"
     (= (clojure.string/lower-case (str elem)) "nil") "nil"
+    (not (seq? elem)) (clojure.string/lower-case (str elem))
     true elem
     )
   )
@@ -113,6 +114,7 @@
     (nil? lis) (list nil amb-global)
     true (evaluar-listado lis amb-global amb-local)
   )
+)
 
 (defn revisar-f
   [lis]
@@ -134,6 +136,67 @@
         )
       )
   )
+
+
+; ### AUXILIARES ###
+
+(defn nil_lista
+  [elem]
+  (if (nil? elem)
+    (list)
+    elem
+    )
+)
+
+
+; #### IMPLEMENTACIONES ######
+
+(defn tlc-lisp-cons
+  [lae]
+
+  (let [ari (controlar-aridad lae 2) first_param (nil_lista (first lae)) second_param (nil_lista (second lae)) ]
+    (cond
+      (seq? ari) ari
+      (not (seq? second_param)) (list '*error* 'list 'expected second_param)
+      (and (seq? first_param) (empty? first_param)) (cons nil second_param)
+      true (cons first_param second_param)
+    )
+  )
+)
+
+
+(defn tlc-lisp-reverse
+  [lae]
+  (let [ari (controlar-aridad lae 1)]
+    (cond (seq? ari) ari
+          (igual? (first lae) nil ) nil
+          (not (seq? (first lae))) (list '*error* 'list 'expected (first lae))
+          true (let [res (reverse (first lae))] (if (igual? res nil) nil res))
+          ))
+  )
+
+
+(defn tlc-lisp-append
+  [lae]
+  (let [ari (controlar-aridad lae 2)]
+    (cond
+      (seq? ari) ari
+      (not (seq? (first lae))) (list '*error* 'list 'expected (first lae))
+      (not (seq? (second lae))) (list '*error* 'list 'expected (second lae))
+      true (flatten (conj (first lae) (second lae)))
+      ))
+)
+
+(defn tlc-lisp-equal
+  [lae]
+  (let [ari (controlar-aridad lae 2), first_param (nil_lista (first lae)), second_param (nil_lista (second lae))]
+    (cond
+      (seq? ari) ari
+      (igual? first_param second_param) 't
+      true nil
+    )
+  )
+)
 
 
 
@@ -241,27 +304,19 @@
                                                    (igual? (first lae) nil) nil
                                                    (not (seq? (first lae))) (list '*error* 'list 'expected (first lae))
                                                    true (ffirst lae)))
+
                          (igual? f 'add) (if (< (count lae) 2)
                                            (list '*error* 'too-few-args)
                                            (try (reduce + lae)
                                                 (catch Exception e (list '*error* 'number-expected))))
 
-                         (igual? f 'append) (let [ari (controlar-aridad lae 2)]
-                                              (cond
-                                                (seq? ari) ari
-                                                (not (seq? (first lae))) (list '*error* 'list 'expected (first lae))
-                                                (not (seq? (second lae))) (list '*error* 'list 'expected (second lae))
-                                                true (flatten (conj (first lae) (second lae)))
-                                              ))
+                         (igual? f 'append) (tlc-lisp-append lae)
 
-                         (igual? f 'reverse) (let [ari (controlar-aridad lae 1)]
-                                              (cond (seq? ari) ari
-                                                    (igual? (first lae) nil ) nil
-                                                    (not (seq? (first lae))) (list '*error* 'list 'expected (first lae))
-                                                    true (let [res (reverse (first lae))] (if (igual? res nil) nil res))
-                                                    )
-                                              )
+                         (igual? f 'reverse) (tlc-lisp-reverse lae)
 
+                         (igual? f 'cons) (tlc-lisp-cons lae)
+
+                         (igual? f 'equal) (tlc-lisp-equal lae)
 
 
                          true (let [lamb (buscar f (concat amb-local amb-global))]
