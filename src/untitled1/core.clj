@@ -63,6 +63,7 @@
     (= elem nil) "nil"
     (= elem "") "nil"
     (= elem '()) "nil"
+    (= elem false) "nil"
     (= (clojure.string/lower-case (str elem)) "nil") "nil"
     (not (seq? elem)) (clojure.string/lower-case (str elem))
     true elem
@@ -100,10 +101,14 @@
   [lis amb-global amb-local]
 
   (let [res (evaluar (ffirst lis) amb-global amb-local)]
-    (cond
-      (nil? res) (evaluar-listado (next list) amb-global amb-local)
+    (
+     do
+     (println "RES: " res)
+     (println "LIS " lis)
+     (cond
+      (igual? nil (first res)) (evaluar-listado (next lis) amb-global amb-local)
       true (list (evaluar-secuencia-en-cond (nfirst lis) amb-global amb-local))
-      )
+      ))
     )
   )
 
@@ -154,7 +159,7 @@
 (defn tlc-lisp-cons
   [lae]
 
-  (let [ari (controlar-aridad lae 2) first_param (nil_lista (first lae)) second_param (nil_lista (second lae)) ]
+  (let [ari (controlar-aridad lae 2), first_param (nil_lista (first lae)), second_param (nil_lista (second lae))]
     (cond
       (seq? ari) ari
       (not (seq? second_param)) (list '*error* 'list 'expected second_param)
@@ -198,6 +203,100 @@
   )
 )
 
+(defn tlc-lisp-eval
+  [lae amb-global amb-local]
+
+  (let [ari (controlar-aridad lae 1), first_param (nil_lista (first lae)) ]
+    (cond
+      (seq? ari) ari
+      (igual? first_param nil) nil
+      true (first (evaluar first_param amb-global amb-local))
+      )
+  )
+)
+
+(defn tlc-lisp-first
+  [lae]
+  (let [ari (controlar-aridad lae 1), first_param (nil_lista (first lae))]
+    (cond
+      (seq? ari) ari
+      (igual? first_param nil) nil
+      true (first first_param)
+
+    )
+
+  )
+)
+
+(defn tlc-lisp-ge
+  [lae]
+
+  (let [ari (controlar-aridad lae 2), first_param (nil_lista (first lae)), second_param (nil_lista (second lae))]
+
+    (cond
+      (seq? ari) ari
+      (not (number? first_param)) (list '*error* 'number 'expected first_param)
+      (not (number? second_param)) (list '*error* 'number 'expected second_param)
+      (>= first_param second_param) 't
+      true nil
+    )
+  )
+)
+
+(defn tlc-lisp-gt
+  [lae]
+
+  (let [ari (controlar-aridad lae 2), first_param (nil_lista (first lae)), second_param (nil_lista (second lae))]
+
+    (cond
+      (seq? ari) ari
+      (not (number? first_param)) (list '*error* 'number 'expected first_param)
+      (not (number? second_param)) (list '*error* 'number 'expected second_param)
+      (> first_param second_param) ('t)
+      true nil
+      )
+    )
+  )
+
+(defn tlc-lisp-lt
+  [lae]
+
+  (let [ari (controlar-aridad lae 2), first_param (nil_lista (first lae)), second_param (nil_lista (second lae))]
+
+    (cond
+      (seq? ari) ari
+      (not (number? first_param)) (list '*error* 'number 'expected first_param)
+      (not (number? second_param)) (list '*error* 'number 'expected second_param)
+      (< first_param second_param) 't
+      true nil
+      )
+    )
+  )
+
+(defn convertir_a_bool
+  [param]
+  (if (igual? nil param) nil 't)
+)
+
+(defn tlc-lisp-not
+  [lae]
+  (let [ari (controlar-aridad lae 1), first_param (first lae)]
+    (cond
+      (seq? ari) ari
+      true (convertir_a_bool (not first_param))
+    )
+  )
+)
+
+(defn tlc-lisp-null
+  [lae]
+  (let [ari (controlar-aridad lae 1), first_param (first lae)]
+    (cond
+      (seq? ari) ari
+      true (convertir_a_bool (igual? nil first_param))
+    )
+  )
+)
 
 
 
@@ -317,6 +416,12 @@
                          (igual? f 'cons) (tlc-lisp-cons lae)
 
                          (igual? f 'equal) (tlc-lisp-equal lae)
+
+                         (igual? f 'eval) (tlc-lisp-eval lae amb-global amb-local)
+
+                         (igual? f 'not) (tlc-lisp-not lae)
+
+                         (igual? f 'null ) (tlc-lisp-null lae)
 
 
                          true (let [lamb (buscar f (concat amb-local amb-global))]

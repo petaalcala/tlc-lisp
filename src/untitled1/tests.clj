@@ -37,4 +37,21 @@
   )
 
 
+(deftest test-buscar
+
+  (is (= (untitled1.core/buscar '- '(+ add - sub)) 'sub))
+  (is (= (untitled1.core/buscar 'doble '(+ add - sub)) '(*error* unbound-symbol doble)))
+
+  )
+
+
+(deftest test-evaluar-cond
+
+  (is (= (untitled1.core/evaluar-cond nil '(equal equal setq setq) nil) '(nil (equal equal setq setq))))
+  (is (= (untitled1.core/evaluar-cond '(((equal 'a 'b) (setq x 1))) '(equal equal first first) nil) '(nil (equal equal first first))))
+  ;(is (= (untitled1.core/evaluar-cond '(((equal 'a 'b) (setq x 1))) '(equal equal first first) nil) '(nil (equal equal first first))))
+  ;(is (= (untitled1.core/evaluar-cond '(((equal 'a 'b) (setq x 1))) '(equal equal first first) nil) '(nil (equal equal first first))))
+
+  )
+
 (run-tests)
