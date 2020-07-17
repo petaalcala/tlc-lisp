@@ -298,6 +298,17 @@
   )
 )
 
+(defn tlc-lisp-prin3
+  [lae]
+
+  (let [ari (controlar-aridad lae 1), first_param (first lae)]
+    (cond
+      (seq? ari) ari
+      true (do (println first_param) first_param)
+    )
+  )
+)
+
 
 
 
