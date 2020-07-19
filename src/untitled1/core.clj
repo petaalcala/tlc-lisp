@@ -1,5 +1,3 @@
-;(ns untitled1.core)
-
 
 (declare evaluar)
 (declare aplicar)
@@ -14,12 +12,20 @@
 (declare evaluar-cond)
 (declare evaluar-secuencia-en-cond)
 
+(defn buscar-indice [lis elem]
+  (loop [arr lis n 0]
+    (cond
+      (igual? elem (first arr)) n
+      (>= n (count lis)) -1
+      true (recur (next arr) (inc n)))
+  )
+)
 
 (defn actualizar-amb
   [amb-global clave valor]
   (do
-    (println "actualizar ambiente: ")
-    (let [pos (.indexOf amb-global clave)]
+    ;(println "actualizar ambiente: ")
+    (let [pos (buscar-indice amb-global clave)]
       (cond
         (= pos -1) (do (conj (conj amb-global valor) clave))
         true (apply list(assoc (vec amb-global) (+ 1 pos) valor))
@@ -80,19 +86,15 @@
 
 (defn igual?
   [a b]
-  ;(println "a:", a)
-  ;(println "b:", b)
   (cond
-    ;(and (= a nil) (= b '()) ) true
     (and (= (convert_to_compare a) (convert_to_compare b))) true
-    ;(= (clojure.string/lower-case (str a)) (clojure.string/lower-case (str b))) true
     true (= a b)
   )
 )
 
 (defn buscar
   [elem lis]
-  (let [pos (.indexOf lis elem)]
+  (let [pos (buscar-indice lis elem)]
     (if (= pos -1)
       (list '*error* 'unbound-symbol elem)
       (nth lis (+ pos 1))
@@ -103,11 +105,13 @@
 
 (defn evaluar-secuencia-en-cond
   [lis amb-global amb-local]
-  (do (println "entre a secuencia con LIS: " lis) (do (println "SECUENCIA") (cond
-    (> (count lis) 1) (let [res (evaluar (first lis) amb-global amb-local)]
-                        (do (println " evaluar RES: " res) (evaluar-secuencia-en-cond (rest lis) (second res) (get res 2) ))
-                        )
-    true (do (println "solo hay 1") (evaluar (first lis) amb-global amb-local))
+  (do
+    ;(println "entre a secuencia con LIS: " lis)
+    (do (println "SECUENCIA") (cond
+      (> (count lis) 1) (let [res (evaluar (first lis) amb-global amb-local)]
+                          (do (println " evaluar RES: " res) (evaluar-secuencia-en-cond (rest lis) (second res) (get res 2) ))
+                          )
+      true (do (println "solo hay 1") (evaluar (first lis) amb-global amb-local))
     )))
   )
 
@@ -130,7 +134,6 @@
 
 (defn evaluar-cond
   [lis amb-global amb-local]
-
   (cond
     (igual? nil lis) (list nil amb-global)
     true (evaluar-listado lis amb-global amb-local)
@@ -428,6 +431,47 @@
   )
 
 
+(defn tlc-lisp-or
+  [lis amb-global amb-local]
+  (do (println "LIS: " lis)
+    (loop [arr lis n 0]
+      (let [res (evaluar (first arr) amb-global amb-local)]
+        (do
+        ;(println "LOOP" "ARR: " arr "n: " n "count:" (count lis))
+        ;(print "EVALUAR ME DIO: ")
+        ;(println "VALOR!!!:" (first (evaluar (first arr) amb-global amb-local)))
+        ;(println " salir del evaluar")
+        (cond
+          (>= n (count lis)) (list nil amb-global)
+          (igual? 't (convert_to_bool (first res))) (list (first res) (second res))
+          true (recur (next arr) (inc n)))))
+      ))
+  )
+
+
+;(defn buscar-indice [lis elem]
+;  (loop [arr lis n 0]
+;    (cond
+;      (>= n (count lis)) nil
+;      (true? (evaluar (first lis) )) n
+;      true (recur (next arr) (inc n)))
+;    )
+;  )
+
+
+
+;(defn evaluar-secuencia-en-cond
+;  [lis amb-global amb-local]
+;  (do (println "entre a secuencia con LIS: " lis) (do (println "SECUENCIA") (cond
+;                                                                              (> (count lis) 1) (let [res (evaluar (first lis) amb-global amb-local)]
+;                                                                                                  (do (println " evaluar RES: " res) (evaluar-secuencia-en-cond (rest lis) (second res) (get res 2) ))
+;                                                                                                  )
+;                                                                              true (do (println "solo hay 1") (evaluar (first lis) amb-global amb-local))
+;                                                                              )))
+;  )
+
+
+
 
 ; REPL (read–eval–print loop).
 ; Aridad 0: Muestra mensaje de bienvenida y se llama recursivamente con el ambiente inicial.
@@ -496,6 +540,7 @@
           (igual? (first expre) 'lambda) (cond (< (count (next expre)) 1) (list (list '*error* 'list 'expected nil) amb-global)
                                                (and (not (igual? (fnext expre) nil)) (not (seq? (fnext expre)))) (list (list '*error* 'list 'expected (fnext expre)) amb-global)
                                                true (list expre amb-global))
+          (igual? (first expre) 'or) (tlc-lisp-or (next expre) amb-global amb-local )
           (igual? (first expre) 'cond) (evaluar-cond (next expre) amb-global amb-local)
           true (aplicar (first (evaluar (first expre) amb-global amb-local)) (map (fn [x] (first (evaluar x amb-global amb-local))) (next expre)) amb-global amb-local))))
 
@@ -516,8 +561,8 @@
   ([resu1 resu2 f lae amb-global amb-local]
    ;(println "Resu1 " resu1)
    ;(println "Resu2 " resu2)
-   (println "F " f)
-   (println "Lae " lae)
+   ;(println "F " f)
+   ;(println "Lae " lae)
 
    (cond resu1 (list resu1 amb-global)
          resu2 (list resu2 amb-global)
