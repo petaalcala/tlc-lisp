@@ -61,7 +61,7 @@
      (seq? elem)
       (cond
         (igual? (first elem) '*error*) (imprimir elem elem)
-        true (do (println (space-imprimir elem)) elem)
+        true (do (println elem) elem)
       )
      true (do (println elem) elem)
    )
@@ -503,6 +503,17 @@
   )
 )
 
+
+(defn tlc-lisp-load
+  [lae amb-global amb-local]
+  (let [ari (controlar-aridad lae 1), first_param (nil_lista (first lae))]
+    (cond
+      (seq? ari) ari
+      true (list nil (cargar-arch amb-global amb-local first_param))
+      )
+  )
+)
+
 ; REPL (read–eval–print loop).
 ; Aridad 0: Muestra mensaje de bienvenida y se llama recursivamente con el ambiente inicial.
 ; Aridad 1: Muestra >>> y lee una expresion y la evalua.
@@ -527,7 +538,7 @@
    (try (let [res (evaluar (read) amb nil)]
           (if (nil? (fnext res))
             true
-            (do (println "RES del repl: ") (imprimir (first res)) (println) (println) (println) (repl (fnext res)))))
+            (do (imprimir (first res)) (repl (fnext res)))))
         (catch Exception e (println) (print "*error* ") (println (get (Throwable->map e) :cause)) (repl amb)))))
 
 ; Evalua una expresion usando los ambientes global y local. Siempre retorna una lista con un resultado y un ambiente.
@@ -580,7 +591,7 @@
             (igual? (first expre) 'or) (tlc-lisp-or (next expre) amb-global amb-local )
             (igual? (first expre) 'cond) (evaluar-cond (next expre) amb-global amb-local)
             (igual? (first expre) 'if) (tlc-lisp-if (next expre) amb-global amb-local )
-            ;(igual? (first expre) 'load) (tlc-lisp-load (next expre) amb-global amb-local)
+            (igual? (first expre) 'load) (tlc-lisp-load (next expre) amb-global amb-local)
             true (do
                    ;(println "Voy a aplicar con expre: " expre)
                      (aplicar
