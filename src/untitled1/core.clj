@@ -27,6 +27,7 @@
   [amb-global clave valor]
   (do
     ;(println "actualizar ambiente: CLAVE" clave " VALOR " valor )
+    ;(println "Ambiente global" amb-global)
     (let [pos (buscar-indice amb-global clave)]
       (cond
         (= pos -1) (do (conj (conj amb-global valor) clave))
@@ -106,51 +107,45 @@
   )
 )
 
-
 (defn evaluar-secuencia-en-cond
   [lis amb-global amb-local]
   (do
-    ;(println "entre a secuencia con LIS: " lis)
+    (println "Evaluar Secuencia en Cond - Entre a secuencia con LIS: " lis)
+    (println "Evaluar Secuencia en Cond - ambglobal" amb-global "amb local" amb-local )
     (do
       (cond
         (> (count lis) 1) (let [res (evaluar (first lis) amb-global amb-local)]
-                          (do (evaluar-secuencia-en-cond (rest lis) (second res) (get res 2) ))
+                          (do
+                            (println "EVALUO Y ME DA: " res)
+                            (evaluar-secuencia-en-cond (rest lis) (second res) amb-local ))
                           )
         true (do (evaluar (first lis) amb-global amb-local))
     )))
   )
 
-;; Evalua (con evaluar) secuencialmente las sublistas de una lista y retorna el valor de la ultima evaluacion.
-;(defn evaluar-secuencia-en-cond [lis amb-global amb-local]
-;  (if (= (count lis) 1)
-;    (evaluar (first lis) amb-global amb-local)
-;    (let [retorno (evaluar (first lis) amb-global amb-local), ambientes (rest retorno)]
-;      (evaluar-secuencia-en-cond (rest lis) (first ambientes) (second ambientes))
-;      )
-;    )
-;  )
-
-
 (defn evaluar-listado
   [lis amb-global amb-local]
 
   (do
-    ;(println "Entre a evaluar-listado con la cabeza de la primer sublista : " (ffirst lis))
+    (println "Evaluar-listado - con la cabeza de la primer sublista : " (ffirst lis))
     (let [res (evaluar (ffirst lis) amb-global amb-local)]
-    (
-     do
-     ;(println "Entre a evaluar-listado con la cabeza de la primer sublista : " (ffirst lis) "Y el resultado es: " res )
-     (cond
-      (igual? nil (first res)) (do (evaluar-cond (next lis) amb-global amb-local))
-      true (do (evaluar-secuencia-en-cond (nfirst lis) amb-global amb-local))
-      ))
+      (
+       do
+       (println "Evaluar-listado - con la cabeza de la primer sublista : " (ffirst lis) "Y el resultado es: " res )
+       (println "Evaluar-Listado LIS: " lis )
+       (cond
+         (igual? 't (first res)) (do (evaluar-secuencia-en-cond (nfirst lis) amb-global amb-local))
+         true (do (evaluar-cond (next lis) amb-global amb-local))
+        ;(igual? nil (first res)) (do (evaluar-cond (next lis) amb-global amb-local))
+        ;true (do (evaluar-secuencia-en-cond (nfirst lis) amb-global amb-local))
+        ))
     ))
   )
 
 (defn evaluar-cond
   [lis amb-global amb-local]
   (do
-    ;(println "Evaluar Cond - LIS " lis "AmbGlobal" amb-global "ambLocal" amb-local)
+    ;(println "Evaluar Cond - LIS: " lis "AmbGlobal:" amb-global "ambLocal:" amb-local)
   (cond
     (igual? nil lis) (list nil amb-global)
     true (evaluar-listado lis amb-global amb-local)
@@ -264,8 +259,9 @@
         second_param (nil_lista (second lae))]
     (do
       ;(println "entre a equal con first_param:" first_param "y second param: " second_param)
-        (cond
+      (cond
       (seq? ari) ari
+      ;(igual? first_param nil) (list '*error* 'unbound-symbol )
       (igual? first_param second_param) (do 't)
       true (do nil)
     ))
@@ -450,15 +446,16 @@
 
 (defn tlc-lisp-list
   [lae]
-  (let [first_param (nil_lista lae)]
+  (do
+    (println "LAE:::" lae)
+    (let [first_param (nil_lista lae)]
     (cond
-      (igual? nil first_param) nil
+      (igual? nil first_param) '()
       true first_param
       )
-    )
+    ))
 
   )
-
 
 (defn tlc-lisp-or
   [lis amb-global amb-local]
@@ -478,21 +475,6 @@
       ))
   )
 
-;(defn tlc-lisp-if
-;  [lis amb-global amb-local]
-;  (do
-;    (println "LIS if: " lis)
-;    (let [res (evaluar (first lis) amb-global amb-local)]
-;
-;      (if (igual? 't (convert_to_bool (first res)))
-;        (do (println "FUE TRUE, evaluo: " (second lis)) (evaluar (second lis) amb-global amb-local))
-;        ;(do (println "FUE FALSE, evaluo: " (get 2 lis) "LIS COMPLETO: " lis) (evaluar (get 2 lis) amb-global amb-local))
-;        (if (not (igual? nil (get 2 lis))) (evaluar (get 2 lis) amb-global amb-local)  )
-;      )
-;    )
-;  )
-;)
-
 (defn tlc-lisp-if
   [lis amb-global amb-local]
   (do
@@ -507,13 +489,13 @@
           true (let [res_condicion (evaluar (first lis) amb-global amb-local )]
                  (do
                    ;(println "RES CONDICION: " res_condicion)
-                   (if (igual? 't (first res_condicion))
-                     (do  (evaluar (second lis) amb-global amb-local))
-                     (if (= 3 ari) (do (evaluar (nth lis 2) amb-global amb-local )) (evaluar nil amb-global amb-local) )
-                   ))
+                   (cond
+                     (igual? 't (first res_condicion)) (do (evaluar (second lis) amb-global amb-local))
+                     (igual? nil (first res_condicion)) (if (= 3 ari) (do (evaluar (nth lis 2) amb-global amb-local )) (evaluar nil amb-global amb-local) )
+                     true res_condicion
+                     )
                  )
-        ;(= 2 ari) (if (evaluar (first lis) amb-global amb-local ) (evaluar (second lis) amb-global amb-local ) )
-
+               )
       ))
     )
   )
@@ -559,10 +541,13 @@
   (do
 
     ;(println "Evaluar - EXPRESION: " expre "amb-global" amb-global "amb-local" amb-local)
+    ;(println "Es un string? " (string? expre))
 
 
     (if (not (seq? expre))
-      (if (or (number? expre) (string? expre)) (list expre amb-global) (do (list (buscar expre (concat amb-local amb-global)) amb-global)))
+      (if (or (number? expre) (string? expre))
+        (list expre amb-global)
+        (do (list (buscar expre (concat amb-local amb-global)) amb-global)))
 
       (cond (igual? expre nil) (list nil amb-global)
             (igual? (first expre) '*error*) (list expre amb-global)
@@ -570,8 +555,15 @@
             (igual? (first expre) 'setq) (cond (< (count (next expre)) 2) (list (list '*error* 'list 'expected nil) amb-global)
                                                (igual? (fnext expre) nil) (list (list '*error* 'cannot-set nil) amb-global)
                                                (not (symbol? (fnext expre))) (list (list '*error* 'symbol 'expected (fnext expre)) amb-global)
-                                               (= (count (next expre)) 2) (let [res (evaluar (first (nnext expre)) amb-global amb-local)]
-                                                                            (list (first res) (actualizar-amb amb-global (fnext expre) (first res))))
+                                               (= (count (next expre)) 2) (do
+                                                                            (println "ESTOY EN SETQ 2 params CON EXPRE: " expre)
+                                                                            (let [res (evaluar (first (nnext expre)) amb-global amb-local)]
+                                                                              (do
+                                                                                  ;(println "el setq me devolvio RES: " res)
+                                                                                  (list (first res) (actualizar-amb amb-global (fnext expre) (first res)))
+                                                                                )
+                                                                              )
+                                                                            )
                                                true (let [res (evaluar (first (nnext expre)) amb-global amb-local)]
                                                       (evaluar (cons 'setq (next (nnext expre))) (actualizar-amb amb-global (fnext expre) (first res)) amb-local)))
             (igual? (first expre) 'de) (cond (< (count (next expre)) 2) (list (list '*error* 'list 'expected nil) amb-global)
@@ -590,13 +582,16 @@
             true (do
                    ;(println "Voy a aplicar con expre: " expre)
                      (aplicar
-                                                                   (first (evaluar (first expre) amb-global amb-local))
-                                                                   (map (fn [x] (first (evaluar x amb-global amb-local))) (next expre))
-                                                                   amb-global
-                                                                   amb-local)))
+                       (first (evaluar (first expre) amb-global amb-local))
+                       (map (fn [x] (first (evaluar x amb-global amb-local))) (next expre))
+                       amb-global
+                       amb-local
+                     )
+                  )
       )
     )
   )
+)
 
 ; Aplica una funcion a una lista de argumentos evaluados, usando los ambientes global y local. Siempre retorna una lista con un resultado y un ambiente.
 ; Si la aplicacion falla, el resultado es una lista con '*error* como primer elemento, por ejemplo: (list '*error* 'arg-wrong-type) y el ambiente es el ambiente global.
