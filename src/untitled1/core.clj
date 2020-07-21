@@ -424,10 +424,6 @@
       true (try (- first_param second_param))
       )
     )
-  (if (< (count lae) 2)
-    (list '*error* 'too-few-args)
-    (try (reduce + lae)
-         (catch Exception e (list '*error* 'number-expected))))
   )
 
 
