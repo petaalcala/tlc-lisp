@@ -1,6 +1,6 @@
 (de breadth-first (bc)
     (prin3 "Ingrese el estado inicial: ") (setq inicial (read))
-    (prin3 "Ingrese el estado   final: ") (setq final (read))
+    (prin3 "Ingrese el estado final: ") (setq final (read))
     	(cond ((equal inicial final) (prin3 "El problema ya esta resuelto !!!") (terpri) (breadth-first bc))
               (t (buscar bc final (list (list inicial)) nil))))
 

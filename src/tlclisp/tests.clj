@@ -2,7 +2,7 @@
 (require '[clojure.test :refer [is deftest run-tests]])
 
 
-(load-file "src/untitled1/core.clj")
+(load-file "src/tlclisp/tlclisp.clj")
 
 
 (deftest test-evaluar
